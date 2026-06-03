@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>News of the Day</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <nav class="top-nav" aria-label="Main navigation">
+      <a class="brand" href="#top" aria-label="News of the Day home">
+        <span class="brand-mark">N</span>
+        <span>News of the Day</span>
+      </a>
+      <a class="nav-link" href="#news-grid">News</a>
+    </nav>
+
+    <section class="hero" id="top">
+      <div class="hero-content">
+        <p class="eyebrow">French for Canadian students</p>
+        <h1>News of the Day</h1>
+        <p class="hero-copy">
+          Positive, Canada-focused French-language news with vocabulary, simple sentences, and comprehension questions for English-speaking Canadian high school students.
+        </p>
+      </div>
+      <div class="hero-panel" aria-label="Daily summary">
+        <span class="panel-label">Today</span>
+        <strong id="today-label">Loading...</strong>
+        <p>Choose a category, read real French headlines about Canada, and practise key vocabulary.</p>
+      </div>
+    </section>
+  </header>
+
+  <main>
+    <section class="controls-section" aria-labelledby="category-title">
+      <div class="section-heading">
+        <p class="eyebrow">Categories</p>
+        <h2 id="category-title">Explore today's news</h2>
+      </div>
+      <div class="category-controls" role="tablist" aria-label="Change news category">
+        <button class="category-button active" type="button" data-category="world" role="tab" aria-selected="true">World / Monde</button>
+        <button class="category-button" type="button" data-category="nation" role="tab" aria-selected="false">Canada</button>
+        <button class="category-button" type="button" data-category="technology" role="tab" aria-selected="false">Technology / Technologie</button>
+        <button class="category-button" type="button" data-category="sports" role="tab" aria-selected="false">Sports / Sport</button>
+        <button class="category-button" type="button" data-category="entertainment" role="tab" aria-selected="false">Culture</button>
+      </div>
+    </section>
+
+    <section class="status-section" aria-live="polite">
+      <div class="loading" id="loading">
+        <span class="loader" aria-hidden="true"></span>
+        <span>Loading today's news...</span>
+      </div>
+      <div class="error-message" id="error-message" hidden></div>
+    </section>
+
+    <section class="news-grid" id="news-grid" aria-label="News articles"></section>
+  </main>
+
+  <footer class="site-footer">
+    <p>News provided by GNews. Summaries are shown on this page for French learning practice.</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
