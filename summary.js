@@ -1,6 +1,36 @@
 const params = new URLSearchParams(window.location.search);
 const summaryId = params.get("id");
 
+const LEVEL_CONFIG = {
+  beginner: {
+    label: "Level 1",
+    minWords: 40,
+    maxWords: 80,
+    minParagraphs: 1,
+    style: "simple"
+  },
+  intermediate: {
+    label: "Level 2",
+    minWords: 80,
+    maxWords: 140,
+    minParagraphs: 2,
+    style: "intermediate"
+  },
+  advanced: {
+    label: "Level 3",
+    minWords: 150,
+    maxWords: 250,
+    minParagraphs: 3,
+    style: "advanced"
+  }
+};
+
+const ENTITY_REJECT_WORDS = new Set([
+  "Article", "Cette", "Ces", "Dans", "Des", "La", "Le", "Les", "Level", "Plusieurs", "Selon", "Une"
+]);
+
+const TRAILING_WORDS = new Set(["à", "avec", "dans", "de", "des", "du", "en", "et", "la", "le", "les", "ou", "pour", "un", "une"]);
+
 const levelLabel = document.getElementById("summary-level");
 const sourceLabel = document.getElementById("summary-source");
 const title = document.getElementById("summary-title");
@@ -35,34 +65,34 @@ async function loadArticleSummary() {
     return;
   }
 
-  const article = payload.article;
-  const level = payload.level || "beginner";
+  const article = normalizeArticle(payload.article || {});
+  const level = LEVEL_CONFIG[payload.level] ? payload.level : "beginner";
 
-  if (!article) {
+  if (!article.title) {
     statusText.textContent = "The article data is incomplete. Please go back and choose the article again.";
     output.textContent = "";
     return;
   }
 
-  levelLabel.textContent = formatLevel(level);
+  levelLabel.textContent = LEVEL_CONFIG[level].label;
   sourceLabel.textContent = article.source || "Unknown source";
   title.textContent = article.title || "News summary";
   renderArticleFacts(article);
 
   try {
     const summary = await requestAiSummary(article, level);
-    statusText.textContent = `${formatLevel(level)} ready.`;
+    statusText.textContent = `${LEVEL_CONFIG[level].label} ready.`;
     renderParagraphs(summary);
   } catch (error) {
     console.warn(error);
-    statusText.textContent = `${formatLevel(level)} ready.`;
+    statusText.textContent = `${LEVEL_CONFIG[level].label} ready.`;
     renderParagraphs(createLocalArticleSummary(article, level));
   }
 }
 
 async function requestAiSummary(article, level) {
   const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), 12000);
+  const timeoutId = window.setTimeout(() => controller.abort(), 42000);
 
   try {
     const response = await fetch("/.netlify/functions/summarize", {
@@ -92,96 +122,123 @@ async function requestAiSummary(article, level) {
       throw new Error("Summary response was empty.");
     }
 
-    return data.summary;
+    return cleanOutput(data.summary);
   } finally {
     window.clearTimeout(timeoutId);
   }
 }
 
 function createLocalArticleSummary(article, level) {
-  const titleText = cleanText(article.title || "cette nouvelle");
-  const source = cleanText(article.source || "la source originale");
-  const publishedDate = formatPublishedDate(article.publishedAt);
-  const details = getArticleDetails(article, titleText);
-  const mainDetail = details[0] || titleText;
-  const extraDetails = details.slice(1).filter((detail) => normalizeText(detail) !== normalizeText(mainDetail));
-  const secondDetail = extraDetails[0] || "";
-  const thirdDetail = extraDetails[1] || "";
+  const config = LEVEL_CONFIG[level];
+  const insights = extractArticleInsights(article);
+  const mainFact = sentenceFrom(insights.facts[0] || article.description || article.title, 28);
+  const detailFact = sentenceFrom(insights.facts[1] || article.content || article.description || article.title, 34);
+  const subject = sentenceFrom(insights.mainSubject || article.title, 18);
+  const source = formatSource(article.source);
+  const dateText = formatPublishedDate(article.publishedAt);
+  const peopleText = insights.people.length ? `Les personnes ou groupes concernés sont ${joinFrenchList(insights.people.slice(0, 3))}.` : "";
+  const placeText = insights.places.length ? `Le lieu principal est ${joinFrenchList(insights.places.slice(0, 2))}.` : "";
+  const stake = sentenceFrom(insights.stakes[0], 30);
+  const consequence = sentenceFrom(insights.consequences[0], 34);
 
   if (level === "beginner") {
-    const paragraphs = [
-      `Level 1. ${sentenceFrom(titleText, 18)}`,
-      sentenceFrom(mainDetail, 18)
-    ];
-
-    if (secondDetail) {
-      paragraphs.push(sentenceFrom(secondDetail, 18));
-    }
-
-    paragraphs.push(
-      `La source est ${source}. La date est ${publishedDate}.`,
-      `L'idée principale est que ${lowerFirst(sentenceFrom(mainDetail, 16))}`
-    );
-
-    return paragraphs.join("\n\n");
+    return fitToRange([
+      `${config.label}. ${subject}`,
+      mainFact,
+      detailFact,
+      placeText || `La source est ${source}.`,
+      `Cette nouvelle est importante parce qu'elle montre une situation réelle.`
+    ].filter(Boolean).join(" "), config);
   }
 
   if (level === "intermediate") {
-    const paragraphs = [
-      `Level 2. ${sentenceFrom(titleText, 22)}`,
-      `Selon ${source}, ${lowerFirst(sentenceFrom(mainDetail, 44))}`
-    ];
-
-    if (secondDetail) {
-      paragraphs.push(sentenceFrom(secondDetail, 48));
-    }
-
-    if (thirdDetail) {
-      paragraphs.push(sentenceFrom(thirdDetail, 42));
-    }
-
-    paragraphs.push(`La date indiquée pour cette information est ${publishedDate}.`);
-
-    return paragraphs.join("\n\n");
+    return fitToRange([
+      `${config.label}. ${subject} Selon ${source}, ${lowerFirst(mainFact)}`,
+      [detailFact, peopleText, placeText].filter(Boolean).join(" "),
+      `Le contexte est important : ${lowerFirst(stake)} La date indiquée pour cette information est ${dateText}.`
+    ].filter(Boolean).join("\n\n"), config);
   }
 
-  const paragraphs = [
-    `Level 3. ${sentenceFrom(titleText, 24)}`,
-    `Selon ${source}, ${lowerFirst(sentenceFrom(mainDetail, 62))}`
-  ];
-
-  if (secondDetail) {
-    paragraphs.push(`L'article ajoute ce détail important : ${lowerFirst(sentenceFrom(secondDetail, 62))}`);
-  }
-
-  if (thirdDetail) {
-    paragraphs.push(sentenceFrom(thirdDetail, 64));
-  }
-
-  paragraphs.push(
-    `Cette information est datée du ${publishedDate} et vient de ${source}.`
-  );
-
-  return paragraphs.join("\n\n");
+  return fitToRange([
+    `${config.label}. ${subject} Selon ${source}, ${lowerFirst(mainFact)} ${detailFact}`,
+    [peopleText, placeText].filter(Boolean).join(" "),
+    `L'enjeu principal est ${lowerFirst(stake)} Cette dimension donne plus de profondeur à la nouvelle, car elle relie le fait principal aux personnes ou aux groupes touchés par la situation.`,
+    `Le sujet est important parce qu'il ne se limite pas à une information isolée. Il aide les lecteurs à comprendre une évolution, une initiative ou une décision dans son contexte. Une conséquence possible est que ${lowerFirst(consequence)} Cette conclusion reste prudente, car elle s'appuie seulement sur les informations disponibles dans l'article.`
+  ].filter(Boolean).join("\n\n"), config);
 }
 
-function getArticleDetails(article, fallbackTitle) {
-  const candidates = [
+function extractArticleInsights(article) {
+  const text = cleanText(`${article.title}. ${article.description}. ${article.content}`);
+  const facts = uniqueItems([
     article.description,
-    article.content
-  ].map(cleanText)
-    .filter(Boolean)
-    .map(removeGNewsTruncation);
+    ...splitSentences(article.content),
+    article.title
+  ].map(removeGNewsTruncation).filter(Boolean)).slice(0, 5);
+  const people = extractEntities(text);
+  const places = extractPlaces(text);
+  const stakes = inferStakes(article);
+  const consequences = inferConsequences(article);
 
-  const unique = [];
-  candidates.forEach((candidate) => {
-    const normalized = normalizeText(candidate);
-    if (candidate && !unique.some((item) => normalizeText(item) === normalized)) {
-      unique.push(candidate);
-    }
-  });
+  return {
+    mainSubject: article.title,
+    facts: facts.length ? facts : [article.title],
+    people,
+    places,
+    stakes,
+    consequences
+  };
+}
 
-  return unique.length > 0 ? unique : [fallbackTitle];
+function inferStakes(article) {
+  const category = normalizeText(article.category);
+
+  if (category.includes("technologie")) {
+    return ["l'innovation, l'accès aux outils numériques et leurs effets concrets"];
+  }
+  if (category.includes("sport")) {
+    return ["la participation, l'effort, l'esprit d'équipe et l'inspiration pour les jeunes"];
+  }
+  if (category.includes("culture")) {
+    return ["l'accès à la culture, l'identité et la place du français au Canada"];
+  }
+  if (category.includes("canada")) {
+    return ["la vie communautaire, la participation citoyenne et les effets locaux"];
+  }
+
+  return ["la coopération, la compréhension du monde et le lien avec le Canada"];
+}
+
+function inferConsequences(article) {
+  const category = normalizeText(article.category);
+
+  if (category.includes("technologie")) {
+    return ["ces changements peuvent modifier la manière d'apprendre, de communiquer ou de travailler"];
+  }
+  if (category.includes("sport")) {
+    return ["le sujet peut influencer la motivation, la participation ou l'image du sport dans la communauté"];
+  }
+  if (category.includes("culture")) {
+    return ["le sujet peut encourager la découverte culturelle et l'utilisation du français dans la vie quotidienne"];
+  }
+  if (category.includes("canada")) {
+    return ["ces initiatives peuvent renforcer la confiance, l'entraide et l'engagement local"];
+  }
+
+  return ["le sujet peut aider les lecteurs à mieux comprendre l'actualité"];
+}
+
+function fitToRange(text, config) {
+  let clean = cleanOutput(text);
+
+  if (countWords(clean) < config.minWords) {
+    clean = `${clean}\n\nCette information mérite une lecture attentive, car elle relie un fait précis à un contexte plus large. Elle aide les élèves à comprendre ce qui se passe et pourquoi cela peut compter pour les personnes concernées.`;
+  }
+
+  if (countWords(clean) > config.maxWords) {
+    clean = trimToWordLimit(clean, config.maxWords);
+  }
+
+  return cleanOutput(clean);
 }
 
 function renderArticleFacts(article) {
@@ -199,7 +256,7 @@ function renderArticleFacts(article) {
 
 function renderParagraphs(text) {
   output.innerHTML = "";
-  text.split(/\n{2,}/).forEach((paragraph) => {
+  cleanOutput(text).split(/\n{2,}/).forEach((paragraph) => {
     const clean = paragraph.trim();
     if (!clean) {
       return;
@@ -211,21 +268,39 @@ function renderParagraphs(text) {
   });
 }
 
-function formatLevel(level) {
-  const labels = {
-    beginner: "Level 1",
-    intermediate: "Level 2",
-    advanced: "Level 3"
+function normalizeArticle(article) {
+  return {
+    category: cleanText(article.category || "Actualité"),
+    title: cleanText(article.title || ""),
+    description: cleanText(article.description || ""),
+    content: cleanText(article.content || ""),
+    source: cleanText(article.source || "source originale"),
+    url: cleanText(article.url || ""),
+    publishedAt: cleanText(article.publishedAt || "")
   };
-
-  return labels[level] || "Level 1";
 }
 
-function cleanText(value) {
-  return String(value || "")
-    .replace(/\s+/g, " ")
-    .replace(/[<>]/g, "")
-    .trim();
+function splitSentences(text) {
+  return cleanText(text)
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => cleanText(sentence))
+    .filter((sentence) => sentence.length > 3);
+}
+
+function extractEntities(text) {
+  const matches = cleanText(text).match(/\b[A-ZÀÂÇÉÈÊËÎÏÔÙÛÜŸ][\p{L}'’-]*(?:\s+[A-ZÀÂÇÉÈÊËÎÏÔÙÛÜŸ][\p{L}'’-]*){0,3}/gu) || [];
+  return uniqueItems(matches.map(cleanText))
+    .filter((item) => {
+      const words = item.split(/\s+/);
+      return item.length > 2 && !ENTITY_REJECT_WORDS.has(item) && !(words.length === 1 && ENTITY_REJECT_WORDS.has(words[0]));
+    })
+    .slice(0, 5);
+}
+
+function extractPlaces(text) {
+  const places = ["Canada", "Ontario", "Québec", "Quebec", "Toronto", "Montréal", "Montreal", "Vancouver", "Ottawa", "Calgary", "Edmonton", "Winnipeg", "Halifax"];
+  const normalizedText = normalizeText(text);
+  return places.filter((place) => normalizedText.includes(normalizeText(place))).slice(0, 4);
 }
 
 function removeGNewsTruncation(text) {
@@ -235,32 +310,80 @@ function removeGNewsTruncation(text) {
     .trim();
 }
 
-function ensureSentence(text) {
-  const clean = cleanText(text);
-  if (!clean) {
-    return "";
+function sentenceFrom(text, maxWords) {
+  const sentence = trimToWordLimit(cleanText(text).replace(/[.!?]+$/g, ""), maxWords);
+  return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
+}
+
+function trimToWordLimit(text, maxWords) {
+  const allWords = getWords(text);
+  if (allWords.length <= maxWords) {
+    if (!TRAILING_WORDS.has(normalizeText(allWords[allWords.length - 1] || ""))) {
+      return cleanText(text);
+    }
+    return allWords.slice(0, -1).join(" ");
   }
 
-  return /[.!?]$/.test(clean) ? clean : `${clean}.`;
+  const words = allWords.slice(0, maxWords);
+  while (words.length > 1 && TRAILING_WORDS.has(normalizeText(words[words.length - 1]))) {
+    words.pop();
+  }
+
+  return words.join(" ");
 }
 
-function sentenceFrom(text, maxWords) {
-  return ensureSentence(stripEndingPunctuation(shorten(text, maxWords)));
+function cleanOutput(text) {
+  return String(text || "")
+    .replace(/\r/g, "")
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.replace(/[ \t]+/g, " ").trim())
+    .filter(Boolean)
+    .join("\n\n")
+    .trim();
 }
 
-function stripEndingPunctuation(text) {
-  return cleanText(text).replace(/[.!?]+$/g, "");
+function cleanText(value) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .replace(/[<>]/g, "")
+    .trim();
 }
 
-function shorten(text, maxWords) {
-  const words = cleanText(text).split(" ").filter(Boolean);
-  const clipped = words.slice(0, maxWords).join(" ");
-  return clipped || "l'article présente le fait principal avec les détails disponibles";
+function countWords(text) {
+  return getWords(text).length;
+}
+
+function getWords(text) {
+  return cleanText(text).match(/[\p{L}\p{N}'’-]+/gu) || [];
+}
+
+function uniqueItems(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = normalizeText(item);
+    if (!key || seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function joinFrenchList(items) {
+  if (items.length <= 1) {
+    return items[0] || "";
+  }
+  return `${items.slice(0, -1).join(", ")} et ${items[items.length - 1]}`;
 }
 
 function lowerFirst(text) {
   const clean = cleanText(text);
   return clean ? clean.charAt(0).toLowerCase() + clean.slice(1) : clean;
+}
+
+function formatSource(source) {
+  const clean = cleanText(source || "la source originale");
+  return normalizeText(clean).includes("practice article") ? "News of the Day" : clean;
 }
 
 function normalizeText(value) {

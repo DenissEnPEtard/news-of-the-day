@@ -22,18 +22,18 @@ const categorySearchQueries = {
 const levelDetails = {
   beginner: {
     label: "Level 1",
-    tag: "Simple",
-    description: "Short sentences and common French words."
+    tag: "40-80 words",
+    description: "Simple French, short sentences, easy explanations."
   },
   intermediate: {
     label: "Level 2",
-    tag: "Clear",
-    description: "More facts, still easy to follow."
+    tag: "80-140 words",
+    description: "Intermediate French with more details and some context."
   },
   advanced: {
     label: "Level 3",
-    tag: "Detailed",
-    description: "More context and richer French."
+    tag: "150-250 words",
+    description: "B2/C1 French with analysis, importance, and possible consequences."
   }
 };
 
@@ -480,7 +480,7 @@ function createArticleCard(article, category, index) {
               </button>
             `).join("")}
           </div>
-          <p class="summary-text" id="${summaryId}" data-summary-text aria-live="polite">Pick Level 1, Level 2, or Level 3. The next page will show the article rewritten in French for that level.</p>
+          <p class="summary-text" id="${summaryId}" data-summary-text aria-live="polite">Pick Level 1, Level 2, or Level 3. The next page will explain the article in French with the right amount of detail.</p>
           <template data-summary-template="beginner">${escapeHtml(summaries.beginner)}</template>
           <template data-summary-template="intermediate">${escapeHtml(summaries.intermediate)}</template>
           <template data-summary-template="advanced">${escapeHtml(summaries.advanced)}</template>
@@ -596,7 +596,7 @@ async function handleNewsGridClick(event) {
     });
 
     card.dataset.selectedLevel = level;
-    summaryText.textContent = `${detail.label} selected: ${detail.description} Open the rewritten French article on the next page.`;
+    summaryText.textContent = `${detail.label} selected: ${detail.description} Open the improved French explanation on the next page.`;
     generateButton.classList.remove("disabled");
     generateButton.removeAttribute("aria-disabled");
     generateButton.textContent = `Open ${detail.label} article`;
@@ -635,10 +635,8 @@ async function handleNewsGridClick(event) {
         }
       }));
 
-      const summaryWindow = window.open(`summary.html?id=${encodeURIComponent(summaryPageId)}`, "_blank", "noopener");
-      if (!summaryWindow) {
-        window.location.href = `summary.html?id=${encodeURIComponent(summaryPageId)}`;
-      }
+      const summaryUrl = `summary.html?id=${encodeURIComponent(summaryPageId)}`;
+      window.location.href = summaryUrl;
     } catch (error) {
       const summaryText = card.querySelector("[data-summary-text]");
       summaryText.textContent = "The summary page could not open. Please refresh and try again.";
@@ -654,9 +652,9 @@ function createDifficultySummaries(article, category) {
   const mainText = description || content || title;
 
   return {
-    beginner: `Level 1. ${title}. ${makeShortSummary(mainText, 18)}.`,
-    intermediate: `Level 2. ${title}. ${makeShortSummary(mainText, 34)} ${makeShortSummary(content, 18)}.`,
-    advanced: `Level 3. ${title}. ${makeShortSummary(mainText, 48)} ${makeShortSummary(content, 34)}.`
+    beginner: `Level 1. ${title}. ${makeShortSummary(mainText, 16)}.`,
+    intermediate: `Level 2. ${title}. ${makeShortSummary(mainText, 26)} The full page adds context and important details.`,
+    advanced: `Level 3. ${title}. ${makeShortSummary(mainText, 34)} The full page gives a deeper explanation, importance, and possible consequences.`
   };
 }
 
