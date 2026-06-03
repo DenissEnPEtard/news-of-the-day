@@ -558,6 +558,27 @@ h3 {
   line-height: 1.18;
 }
 
+.article-facts {
+  margin: 18px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f6f7f9;
+  padding: 14px 16px;
+}
+
+.article-facts p {
+  margin: 0 0 8px;
+  color: var(--muted);
+}
+
+.article-facts p:last-child {
+  margin-bottom: 0;
+}
+
+.article-facts strong {
+  color: var(--text);
+}
+
 .presentation-status {
   margin: 14px 0 22px;
   color: var(--muted);

@@ -6,6 +6,7 @@ const sourceLabel = document.getElementById("summary-source");
 const title = document.getElementById("summary-title");
 const statusText = document.getElementById("summary-status");
 const output = document.getElementById("summary-output");
+const factsBox = document.getElementById("article-facts");
 
 loadPresentationSummary();
 
@@ -46,6 +47,7 @@ async function loadPresentationSummary() {
   levelLabel.textContent = formatLevel(level);
   sourceLabel.textContent = article.source || "Unknown source";
   title.textContent = article.title || "News summary";
+  renderArticleFacts(article);
 
   try {
     const summary = await requestAiSummary(article, level);
@@ -74,7 +76,8 @@ async function requestAiSummary(article, level) {
       title: article.title,
       description: article.description,
       content: article.content,
-      source: article.source
+      source: article.source,
+      publishedAt: article.publishedAt
     })
   });
   window.clearTimeout(timeoutId);
@@ -93,16 +96,20 @@ async function requestAiSummary(article, level) {
 
 function createLocalPresentationSummary(article, level) {
   const titleText = cleanText(article.title || "cette nouvelle");
+  const description = cleanText(article.description || "");
   const detail = cleanText(article.content || article.description || titleText);
   const source = cleanText(article.source || "la source de l'article");
   const category = cleanText(article.category || "l'actualite");
+  const mainInfo = description || detail || titleText;
+  const supportingInfo = detail && detail !== description ? detail : mainInfo;
 
   if (level === "beginner") {
     return [
       `Bonjour tout le monde. Aujourd'hui, je vais presenter une nouvelle dans la categorie ${category}.`,
-      `Le titre de la nouvelle est : ${titleText}. Cette nouvelle parle d'un sujet actuel qui peut interesser des eleves au Canada.`,
-      `L'idee principale est simple : ${shorten(detail, 38)}.`,
-      `Cette information vient de ${source}. A mon avis, cette nouvelle est utile parce qu'elle nous aide a pratiquer le francais avec un vrai sujet d'actualite.`,
+      `Le titre est : ${titleText}.`,
+      `Selon ${source}, l'information principale est : ${shorten(mainInfo, 34)}.`,
+      `Un detail important est : ${shorten(supportingInfo, 28)}.`,
+      `Je pense que cet article est utile pour notre classe parce qu'il nous donne un vrai sujet canadien a expliquer en francais.`,
       `Merci de m'avoir ecoute.`
     ].join("\n\n");
   }
@@ -110,21 +117,34 @@ function createLocalPresentationSummary(article, level) {
   if (level === "intermediate") {
     return [
       `Bonjour a toutes et a tous. Aujourd'hui, je vais vous presenter une nouvelle liee a ${category}.`,
-      `Cette nouvelle s'intitule : ${titleText}. Elle presente un sujet actuel qui peut parler aux Canadiens, surtout aux jeunes qui veulent mieux comprendre le monde en francais.`,
-      `D'apres les informations disponibles, ${shorten(detail, 62)}.`,
-      `Ce qui est important, c'est que cette nouvelle donne un exemple concret d'un evenement, d'une idee ou d'une tendance qui existe autour de nous. Elle nous permet aussi d'apprendre du vocabulaire utile et de parler d'actualite avec des phrases claires.`,
-      `Pour conclure, je pense que cette nouvelle est interessante parce qu'elle relie le francais a la vie quotidienne au Canada. Merci de votre attention.`
+      `L'article s'intitule : ${titleText}. Il vient de ${source}, et il parle surtout de cette idee : ${shorten(mainInfo, 48)}.`,
+      `D'abord, cette nouvelle est importante parce qu'elle presente un fait concret, pas seulement un theme general. Ensuite, le detail a retenir est le suivant : ${shorten(supportingInfo, 58)}.`,
+      `Enfin, je pense que cet article peut interesser des eleves canadiens parce qu'il relie l'actualite a notre vie, a notre pays ou a notre facon d'apprendre le francais.`,
+      `Pour conclure, cet article me permet d'expliquer une vraie information en francais et de pratiquer un vocabulaire utile devant la classe.`
     ].join("\n\n");
   }
 
   return [
     `Bonjour a toutes et a tous. Pour ma presentation, j'ai choisi une nouvelle de la categorie ${category}. Le titre est : ${titleText}.`,
-    `Cette nouvelle est interessante parce qu'elle ne presente pas seulement une information, mais aussi un contexte. Elle nous aide a comprendre une situation actuelle et a reflechir a son importance pour les Canadiens, en particulier pour les jeunes qui apprennent le francais.`,
-    `Selon les informations de l'article, ${shorten(detail, 90)}.`,
-    `On peut retenir trois idees principales. Premierement, le sujet est actuel et concret. Deuxiemement, il montre un lien avec la societe canadienne, la culture, la technologie, le sport ou la vie communautaire. Troisiemement, il donne l'occasion d'utiliser un francais plus precis pour expliquer, comparer et donner son opinion.`,
-    `A mon avis, cette nouvelle merite d'etre partagee en classe parce qu'elle rend le francais plus vivant. Elle montre que la langue n'est pas seulement une matiere scolaire : c'est aussi un outil pour comprendre le monde, discuter avec les autres et exprimer clairement ses idees.`,
+    `La source est ${source}. L'idee principale de l'article est la suivante : ${shorten(mainInfo, 70)}.`,
+    `Le detail le plus important a expliquer est celui-ci : ${shorten(supportingInfo, 95)}. Ce detail rend l'article plus precis, parce qu'il montre de quoi il s'agit vraiment et evite de parler seulement du sujet de maniere generale.`,
+    `On peut retenir trois elements. Premierement, l'article presente une information concrete. Deuxiemement, cette information a un lien avec ${category} et peut parler a des eleves au Canada. Troisiemement, elle donne l'occasion d'utiliser un francais plus riche pour expliquer les faits, donner du contexte et exprimer une opinion.`,
+    `A mon avis, cette nouvelle merite d'etre presentee en classe parce qu'elle transforme un article reel en discussion. Elle nous oblige a lire attentivement le titre, la description et les details disponibles, puis a les reformuler clairement pour que tout le monde comprenne.`,
     `Merci de votre attention.`
   ].join("\n\n");
+}
+
+function renderArticleFacts(article) {
+  const facts = [
+    ["Title", article.title],
+    ["Source", article.source],
+    ["Main detail", article.description || article.content]
+  ].filter(([, value]) => cleanText(value));
+
+  factsBox.hidden = facts.length === 0;
+  factsBox.innerHTML = facts.map(([label, value]) => `
+    <p><strong>${label}:</strong> ${escapeHtml(cleanText(value))}</p>
+  `).join("");
 }
 
 function renderParagraphs(text) {
@@ -157,4 +177,13 @@ function shorten(text, maxWords) {
   const words = cleanText(text).split(" ").filter(Boolean);
   const clipped = words.slice(0, maxWords).join(" ");
   return clipped || "l'article presente une nouvelle actuelle avec un lien possible avec le Canada";
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
