@@ -22,7 +22,7 @@ exports.handler = async (event) => {
         model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
         input: prompt,
         temperature: 0.4,
-        max_output_tokens: level === "advanced" ? 520 : level === "intermediate" ? 380 : 260
+        max_output_tokens: level === "advanced" ? 620 : level === "intermediate" ? 460 : 300
       })
     });
 
@@ -40,19 +40,20 @@ exports.handler = async (event) => {
 
 function buildPrompt(article, level) {
   const levelInstructions = {
-    beginner: "Beginner level: write a real article summary in very simple French. Use 4 to 5 short paragraphs, common vocabulary, and clear explanations. Around 110 to 140 French words.",
-    intermediate: "Intermediate level: write a real article summary in clear French. Use 4 paragraphs: main idea, important details, why it matters, and what to remember. Around 170 to 220 French words.",
-    advanced: "Advanced level: write a detailed article summary in richer but still student-friendly French. Use 5 paragraphs: context, main fact, supporting details, explanation of importance, and final takeaway. Around 260 to 330 French words."
+    beginner: "Level 1: rewrite the article in very simple French. Use the most common words, short sentences, present tense when possible, and 4 to 5 short paragraphs. Explain the main fact and one or two key details. Around 90 to 130 French words.",
+    intermediate: "Level 2: rewrite the same article in clear French with more detail. Use 4 to 5 paragraphs. Explain the main fact, important details, why they matter, and what the reader should remember. Around 160 to 220 French words.",
+    advanced: "Level 3: rewrite the same article in richer but still student-friendly French. Use 5 to 6 paragraphs. Include context, main fact, supporting details, explanation of importance, and final takeaway. Around 250 to 330 French words."
   };
 
   return [
     "You are helping English-speaking Canadian high school students learn French.",
-    "Create a clear, complete, student-friendly French summary of this news article.",
-    "This must be a real summary, not an oral presentation script.",
+    "Rewrite this news article in French at the selected level, in the style of a leveled news reading text.",
+    "This must be a real leveled article summary with explanations and details, not an oral presentation script.",
     "The summary MUST be about the specific article below, not a generic topic.",
     "You MUST mention the specific title or a close paraphrase of it in the first paragraph.",
     "You MUST use concrete details from the Description and Content fields. If the article data is short, say only what is available and do not add unrelated examples.",
     "Explain the article's main fact, important details, why it matters, and what the reader should remember.",
+    "Start the first paragraph with the level label: Level 1, Level 2, or Level 3.",
     "Do not invent facts beyond the article data.",
     "Do not write a generic text about Canada, French learning, school, or the category unless those details are in the article data.",
     "Do not include markdown, bullet points, stage directions, greetings, or phrases like 'Bonjour tout le monde'.",

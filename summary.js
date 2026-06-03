@@ -51,11 +51,11 @@ async function loadArticleSummary() {
 
   try {
     const summary = await requestAiSummary(article, level);
-    statusText.textContent = "Summary ready.";
+    statusText.textContent = `${formatLevel(level)} ready.`;
     renderParagraphs(summary);
   } catch (error) {
     console.warn(error);
-    statusText.textContent = "AI summary unavailable. Showing a local article summary instead.";
+    statusText.textContent = "AI summary unavailable. Showing a local leveled article instead.";
     renderParagraphs(createLocalArticleSummary(article, level));
   }
 }
@@ -105,31 +105,31 @@ function createLocalArticleSummary(article, level) {
 
   if (level === "beginner") {
     return [
-      `Cet article s'intitule : ${titleText}. Il vient de ${source}.`,
-      `L'idee principale est simple : ${shorten(mainInfo, 36)}.`,
-      `Un detail important est : ${shorten(supportingInfo, 32)}.`,
-      `En mots simples, cet article parle d'un sujet lie a ${category}. Il aide a comprendre une information actuelle sans utiliser un francais trop difficile.`,
-      `A retenir : le titre, l'idee principale et le detail important sont les trois parties les plus utiles pour comprendre l'article.`
+      `Level 1. Cet article s'appelle : ${titleText}.`,
+      `Il vient de ${source}.`,
+      `L'idee principale est : ${shorten(mainInfo, 24)}.`,
+      `Un detail important est : ${shorten(supportingInfo, 22)}.`,
+      `A retenir : cette nouvelle parle de ${category}. Elle donne une information simple et utile.`
     ].join("\n\n");
   }
 
   if (level === "intermediate") {
     return [
-      `L'article s'intitule : ${titleText}. Il vient de ${source} et appartient a la categorie ${category}.`,
-      `Le resume de l'article est le suivant : ${shorten(mainInfo, 58)}.`,
-      `Le detail le plus utile pour mieux comprendre l'article est : ${shorten(supportingInfo, 70)}. Ce detail est important parce qu'il precise le sujet et montre ce que le lecteur doit retenir.`,
-      `L'article peut etre relie a la vie des Canadiens ou des eleves parce qu'il donne un exemple concret d'une situation actuelle. Il ne faut donc pas seulement retenir le theme general, mais aussi les informations precises donnees par la source.`,
-      `En conclusion, cet article explique une information principale, ajoute au moins un detail important, et permet de pratiquer un vocabulaire utile en francais.`
+      `Level 2. L'article s'intitule : ${titleText}. Il vient de ${source} et appartient a la categorie ${category}.`,
+      `Le resume est le suivant : ${shorten(mainInfo, 52)}.`,
+      `Le detail principal est : ${shorten(supportingInfo, 62)}. Ce detail aide a comprendre exactement ce qui se passe dans l'article.`,
+      `L'information est importante parce qu'elle donne un exemple concret, pas seulement un theme general. Le lecteur doit retenir le sujet, l'idee principale et le detail qui explique la nouvelle.`,
+      `En conclusion, cet article montre une information actuelle avec assez de details pour la comprendre en francais.`
     ].join("\n\n");
   }
 
   return [
-    `Titre de l'article : ${titleText}. Source : ${source}. Categorie : ${category}.`,
+    `Level 3. Titre de l'article : ${titleText}. Source : ${source}. Categorie : ${category}.`,
     `Resume detaille : ${shorten(mainInfo, 90)}.`,
-    `Explication du detail principal : ${shorten(supportingInfo, 110)}. Ce detail donne de la precision au resume, car il montre les faits disponibles dans l'article plutot que de rester au niveau d'une idee generale.`,
-    `Pour comprendre l'article, il faut distinguer trois choses. D'abord, le sujet annonce par le titre. Ensuite, l'information principale donnee par la description. Enfin, les details qui expliquent pourquoi cette information est importante ou interessante.`,
-    `Ce qu'il faut retenir, c'est que l'article presente une information precise et que le lecteur doit utiliser les details pour expliquer le sens de la nouvelle. Un bon resume ne repete pas seulement le titre : il explique aussi ce qui se passe, qui est concerne, et pourquoi cela compte.`,
-    `En conclusion, cet article doit etre compris a partir de ses faits principaux, de sa source et des details disponibles.`
+    `Explication des details : ${shorten(supportingInfo, 110)}. Ces details sont importants parce qu'ils donnent de la precision au sujet et permettent de comprendre les faits disponibles dans l'article.`,
+    `Pour analyser cette nouvelle, il faut distinguer le titre, l'idee principale et les informations qui ajoutent du contexte. Le titre annonce le sujet, mais les details expliquent ce qui se passe vraiment.`,
+    `Ce qu'il faut retenir, c'est que l'article ne doit pas etre compris seulement comme un theme general. Il faut regarder la source, les faits donnes et les consequences possibles pour mieux expliquer la nouvelle en francais.`,
+    `En conclusion, ce texte presente le meme article avec plus de contexte, plus de vocabulaire et une explication plus complete des details.`
   ].join("\n\n");
 }
 
@@ -157,12 +157,12 @@ function renderParagraphs(text) {
 
 function formatLevel(level) {
   const labels = {
-    beginner: "Beginner",
-    intermediate: "Intermediate",
-    advanced: "Advanced"
+    beginner: "Level 1",
+    intermediate: "Level 2",
+    advanced: "Level 3"
   };
 
-  return labels[level] || "Beginner";
+  return labels[level] || "Level 1";
 }
 
 function cleanText(value) {

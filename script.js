@@ -397,11 +397,11 @@ function createArticleCard(article, category, index) {
         <section class="summary-box" aria-labelledby="${summaryId}-title">
           <h4 id="${summaryId}-title">Choose your summary level</h4>
           <div class="difficulty-buttons" role="group" aria-label="Summary difficulty">
-            <button type="button" class="difficulty-button" data-summary-level="beginner">Beginner</button>
-            <button type="button" class="difficulty-button" data-summary-level="intermediate">Intermediate</button>
-            <button type="button" class="difficulty-button" data-summary-level="advanced">Advanced</button>
+            <button type="button" class="difficulty-button" data-summary-level="beginner">Level 1</button>
+            <button type="button" class="difficulty-button" data-summary-level="intermediate">Level 2</button>
+            <button type="button" class="difficulty-button" data-summary-level="advanced">Level 3</button>
           </div>
-          <p class="summary-text" id="${summaryId}" data-summary-text aria-live="polite">Select a level first, then open a detailed article summary.</p>
+          <p class="summary-text" id="${summaryId}" data-summary-text aria-live="polite">Choose Level 1, Level 2, or Level 3 to read the article at your French level.</p>
           <template data-summary-template="beginner">${escapeHtml(summaries.beginner)}</template>
           <template data-summary-template="intermediate">${escapeHtml(summaries.intermediate)}</template>
           <template data-summary-template="advanced">${escapeHtml(summaries.advanced)}</template>
@@ -516,10 +516,10 @@ async function handleNewsGridClick(event) {
     });
 
     card.dataset.selectedLevel = level;
-    summaryText.textContent = `Level selected: ${difficultyButton.textContent}. Open a detailed summary of this article.`;
+    summaryText.textContent = `${difficultyButton.textContent} selected. Open this article in a clear French level.`;
     generateButton.classList.remove("disabled");
     generateButton.removeAttribute("aria-disabled");
-    generateButton.textContent = "Open article summary";
+    generateButton.textContent = "Open leveled article";
     return;
   }
 
@@ -527,7 +527,7 @@ async function handleNewsGridClick(event) {
     event.preventDefault();
     const card = summaryButton.closest("[data-card]");
     const summaryText = card.querySelector("[data-summary-text]");
-    summaryText.textContent = "Please choose Beginner, Intermediate, or Advanced first.";
+    summaryText.textContent = "Please choose Level 1, Level 2, or Level 3 first.";
     return;
   }
 
@@ -573,9 +573,9 @@ function createDifficultySummaries(article, category) {
   const categoryLabel = categoryLabels[category];
 
   return {
-    beginner: `Sujet : ${categoryLabel}. Cette nouvelle parle de : ${title}. Idee principale : ${makeShortSummary(content, 18)}.`,
-    intermediate: `${makeShortSummary(content, 34)} Cette nouvelle est liee a ${categoryLabel}. Elle peut aider un eleve canadien a comprendre un sujet actuel en francais.`,
-    advanced: `${makeShortSummary(content, 54)} Cette nouvelle montre un enjeu actuel lie a ${categoryLabel}. Pour aller plus loin, demande-toi pourquoi cette information est importante pour le Canada, qui est concerne, et quel point de vue la source met en avant.`
+    beginner: `Level 1. Titre : ${title}. Idee principale : ${makeShortSummary(content, 18)}.`,
+    intermediate: `Level 2. ${makeShortSummary(content, 34)} Cette nouvelle est liee a ${categoryLabel} et ajoute quelques details importants.`,
+    advanced: `Level 3. ${makeShortSummary(content, 54)} Cette nouvelle explique le sujet avec plus de contexte, de details et d'importance.`
   };
 }
 
