@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://remarkable-taiyaki-dd3ba9.netlify.app/sitemap.xml
