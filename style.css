@@ -1,5 +1,5 @@
 :root {
-  --bg: #f6f7f9;
+  --bg: #f4f6f8;
   --surface: #ffffff;
   --surface-strong: #111827;
   --text: #18202f;
@@ -10,7 +10,10 @@
   --accent-soft: #fff0ed;
   --teal: #0f766e;
   --teal-soft: #e8f6f4;
+  --blue: #1d4f91;
+  --blue-soft: #eef5ff;
   --shadow: 0 18px 40px rgba(24, 32, 47, 0.1);
+  --soft-shadow: 0 10px 26px rgba(24, 32, 47, 0.07);
 }
 
 * {
@@ -35,10 +38,10 @@ a {
 
 .site-header {
   background:
-    linear-gradient(rgba(17, 24, 39, 0.72), rgba(17, 24, 39, 0.5)),
+    linear-gradient(rgba(17, 24, 39, 0.78), rgba(17, 24, 39, 0.48)),
     url("https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1800&q=80") center/cover;
   color: #ffffff;
-  min-height: 560px;
+  min-height: 540px;
 }
 
 .top-nav {
@@ -79,6 +82,7 @@ a {
   border-radius: 999px;
   padding: 10px 16px;
   font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .hero {
@@ -114,7 +118,7 @@ p {
 
 h1 {
   margin: 0;
-  font-size: clamp(3rem, 8vw, 6.8rem);
+  font-size: 5.8rem;
   line-height: 0.95;
   letter-spacing: 0;
 }
@@ -131,6 +135,7 @@ h1 {
   background: rgba(255, 255, 255, 0.92);
   color: var(--text);
   border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
   padding: 22px;
   box-shadow: var(--shadow);
 }
@@ -159,6 +164,48 @@ main {
   margin: 0 auto;
 }
 
+.learning-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: -38px 0 18px;
+}
+
+.learning-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 12px;
+  align-items: start;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--soft-shadow);
+  padding: 16px;
+}
+
+.learning-step span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.learning-step strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.learning-step p {
+  grid-column: 2;
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 .controls-section {
   padding: 38px 0 22px;
   display: grid;
@@ -173,7 +220,7 @@ main {
 
 h2 {
   margin: 0;
-  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  font-size: 2.25rem;
 }
 
 .category-controls {
@@ -247,6 +294,12 @@ h2 {
   padding: 14px 16px;
 }
 
+.error-message.notice-message {
+  border-color: #bfd8d4;
+  background: var(--teal-soft);
+  color: var(--teal);
+}
+
 .news-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -262,7 +315,14 @@ h2 {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(24, 32, 47, 0.07);
+  box-shadow: var(--soft-shadow);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.news-card:hover {
+  border-color: #c7d0dc;
+  box-shadow: 0 18px 42px rgba(24, 32, 47, 0.1);
+  transform: translateY(-2px);
 }
 
 .news-image {
@@ -312,7 +372,7 @@ h3 {
 }
 
 .summary-box {
-  border: 1px solid #f2c7be;
+  border: 1px solid #f0c7bd;
   border-radius: 8px;
   background: #fff7f5;
   padding: 14px;
@@ -324,6 +384,12 @@ h3 {
   font-size: 0.95rem;
 }
 
+.level-hint {
+  margin: -4px 0 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .difficulty-buttons {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -331,16 +397,21 @@ h3 {
 }
 
 .difficulty-button {
-  min-height: 38px;
+  min-height: 58px;
   border: 1px solid #f2c7be;
-  border-radius: 999px;
+  border-radius: 8px;
   background: #ffffff;
   color: var(--accent-dark);
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
   font: inherit;
   font-size: 0.82rem;
   font-weight: 800;
-  padding: 8px 10px;
+  padding: 9px 10px;
+  text-align: left;
 }
 
 .difficulty-button:hover,
@@ -348,6 +419,12 @@ h3 {
   background: var(--accent);
   border-color: var(--accent);
   color: #ffffff;
+}
+
+.difficulty-button span {
+  color: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .summary-text {
@@ -374,13 +451,13 @@ h3 {
 .video-box {
   border: 1px solid #c7d7f2;
   border-radius: 8px;
-  background: #f4f8ff;
+  background: var(--blue-soft);
   padding: 14px;
 }
 
 .video-box h4 {
   margin: 0 0 10px;
-  color: #1d4f91;
+  color: var(--blue);
   font-size: 0.95rem;
 }
 
@@ -418,7 +495,7 @@ h3 {
   min-height: 38px;
   margin-top: 10px;
   border-radius: 999px;
-  background: #1d4f91;
+  background: var(--blue);
   color: #ffffff;
   font-size: 0.9rem;
   font-weight: 800;
@@ -465,10 +542,12 @@ h3 {
   font-weight: 800;
   text-decoration: none;
   padding: 10px 16px;
+  transition: background 160ms ease, transform 160ms ease;
 }
 
 .summary-button:hover {
   background: var(--accent-dark);
+  transform: translateY(-1px);
 }
 
 .summary-button.disabled,
@@ -520,7 +599,7 @@ h3 {
 
 .presentation-hero h1 {
   color: var(--surface-strong);
-  font-size: clamp(2.4rem, 7vw, 5rem);
+  font-size: 4.4rem;
 }
 
 .presentation-hero p {
@@ -554,7 +633,7 @@ h3 {
 }
 
 .presentation-card h2 {
-  font-size: clamp(1.55rem, 4vw, 2.4rem);
+  font-size: 2rem;
   line-height: 1.18;
 }
 
@@ -588,13 +667,14 @@ h3 {
 .oral-text {
   border-left: 5px solid var(--accent);
   background: #fff7f5;
+  border-radius: 0 8px 8px 0;
   padding: 18px 20px;
 }
 
 .oral-text p {
   margin: 0 0 18px;
   color: var(--text);
-  font-size: clamp(1.08rem, 2.3vw, 1.28rem);
+  font-size: 1.16rem;
   line-height: 1.75;
 }
 
@@ -603,6 +683,14 @@ h3 {
 }
 
 @media (max-width: 900px) {
+  h1 {
+    font-size: 4.4rem;
+  }
+
+  h2 {
+    font-size: 2rem;
+  }
+
   .hero,
   .controls-section {
     grid-template-columns: 1fr;
@@ -623,11 +711,29 @@ h3 {
   .news-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .learning-steps {
+    grid-template-columns: 1fr;
+    margin-top: -28px;
+  }
+
+  .presentation-hero h1 {
+    font-size: 3.4rem;
+  }
 }
 
 @media (max-width: 620px) {
   .site-header {
     min-height: 520px;
+  }
+
+  h1 {
+    font-size: 3rem;
+  }
+
+  h2,
+  .presentation-card h2 {
+    font-size: 1.55rem;
   }
 
   .top-nav {
@@ -659,5 +765,13 @@ h3 {
 
   .difficulty-buttons {
     grid-template-columns: 1fr;
+  }
+
+  .presentation-hero h1 {
+    font-size: 2.6rem;
+  }
+
+  .oral-text p {
+    font-size: 1.03rem;
   }
 }

@@ -36,7 +36,7 @@ async function loadArticleSummary() {
   }
 
   const article = payload.article;
-  const level = payload.level;
+  const level = payload.level || "beginner";
 
   if (!article) {
     statusText.textContent = "The article data is incomplete. Please go back and choose the article again.";
@@ -55,7 +55,7 @@ async function loadArticleSummary() {
     renderParagraphs(summary);
   } catch (error) {
     console.warn(error);
-    statusText.textContent = "AI summary unavailable. Showing a local leveled article instead.";
+    statusText.textContent = `${formatLevel(level)} ready.`;
     renderParagraphs(createLocalArticleSummary(article, level));
   }
 }
@@ -64,80 +64,131 @@ async function requestAiSummary(article, level) {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), 12000);
 
-  const response = await fetch("/.netlify/functions/summarize", {
-    method: "POST",
-    signal: controller.signal,
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      level,
-      category: article.category,
-      title: article.title,
-      description: article.description,
-      content: article.content,
-      source: article.source,
-      publishedAt: article.publishedAt
-    })
-  });
-  window.clearTimeout(timeoutId);
+  try {
+    const response = await fetch("/.netlify/functions/summarize", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        level,
+        category: article.category,
+        title: article.title,
+        description: article.description,
+        content: article.content,
+        source: article.source,
+        publishedAt: article.publishedAt,
+        url: article.url
+      })
+    });
 
-  if (!response.ok) {
-    throw new Error(`Summary request failed: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`Summary request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    if (!data.summary) {
+      throw new Error("Summary response was empty.");
+    }
+
+    return data.summary;
+  } finally {
+    window.clearTimeout(timeoutId);
   }
-
-  const data = await response.json();
-  if (!data.summary) {
-    throw new Error("Summary response was empty.");
-  }
-
-  return data.summary;
 }
 
 function createLocalArticleSummary(article, level) {
   const titleText = cleanText(article.title || "cette nouvelle");
-  const description = cleanText(article.description || "");
-  const detail = cleanText(article.content || article.description || titleText);
-  const source = cleanText(article.source || "la source de l'article");
-  const category = cleanText(article.category || "l'actualite");
-  const mainInfo = description || detail || titleText;
-  const supportingInfo = detail && detail !== description ? detail : mainInfo;
+  const source = cleanText(article.source || "la source originale");
+  const publishedDate = formatPublishedDate(article.publishedAt);
+  const details = getArticleDetails(article, titleText);
+  const mainDetail = details[0] || titleText;
+  const extraDetails = details.slice(1).filter((detail) => normalizeText(detail) !== normalizeText(mainDetail));
+  const secondDetail = extraDetails[0] || "";
+  const thirdDetail = extraDetails[1] || "";
 
   if (level === "beginner") {
-    return [
-      `Level 1. Cet article s'appelle : ${titleText}.`,
-      `Il vient de ${source}.`,
-      `L'idee principale est : ${shorten(mainInfo, 24)}.`,
-      `Un detail important est : ${shorten(supportingInfo, 22)}.`,
-      `A retenir : cette nouvelle parle de ${category}. Elle donne une information simple et utile.`
-    ].join("\n\n");
+    const paragraphs = [
+      `Level 1. ${sentenceFrom(titleText, 18)}`,
+      sentenceFrom(mainDetail, 18)
+    ];
+
+    if (secondDetail) {
+      paragraphs.push(sentenceFrom(secondDetail, 18));
+    }
+
+    paragraphs.push(
+      `La source est ${source}. La date est ${publishedDate}.`,
+      `L'idée principale est que ${lowerFirst(sentenceFrom(mainDetail, 16))}`
+    );
+
+    return paragraphs.join("\n\n");
   }
 
   if (level === "intermediate") {
-    return [
-      `Level 2. L'article s'intitule : ${titleText}. Il vient de ${source} et appartient a la categorie ${category}.`,
-      `Le resume est le suivant : ${shorten(mainInfo, 52)}.`,
-      `Le detail principal est : ${shorten(supportingInfo, 62)}. Ce detail aide a comprendre exactement ce qui se passe dans l'article.`,
-      `L'information est importante parce qu'elle donne un exemple concret, pas seulement un theme general. Le lecteur doit retenir le sujet, l'idee principale et le detail qui explique la nouvelle.`,
-      `En conclusion, cet article montre une information actuelle avec assez de details pour la comprendre en francais.`
-    ].join("\n\n");
+    const paragraphs = [
+      `Level 2. ${sentenceFrom(titleText, 22)}`,
+      `Selon ${source}, ${lowerFirst(sentenceFrom(mainDetail, 44))}`
+    ];
+
+    if (secondDetail) {
+      paragraphs.push(sentenceFrom(secondDetail, 48));
+    }
+
+    if (thirdDetail) {
+      paragraphs.push(sentenceFrom(thirdDetail, 42));
+    }
+
+    paragraphs.push(`La date indiquée pour cette information est ${publishedDate}.`);
+
+    return paragraphs.join("\n\n");
   }
 
-  return [
-    `Level 3. Titre de l'article : ${titleText}. Source : ${source}. Categorie : ${category}.`,
-    `Resume detaille : ${shorten(mainInfo, 90)}.`,
-    `Explication des details : ${shorten(supportingInfo, 110)}. Ces details sont importants parce qu'ils donnent de la precision au sujet et permettent de comprendre les faits disponibles dans l'article.`,
-    `Pour analyser cette nouvelle, il faut distinguer le titre, l'idee principale et les informations qui ajoutent du contexte. Le titre annonce le sujet, mais les details expliquent ce qui se passe vraiment.`,
-    `Ce qu'il faut retenir, c'est que l'article ne doit pas etre compris seulement comme un theme general. Il faut regarder la source, les faits donnes et les consequences possibles pour mieux expliquer la nouvelle en francais.`,
-    `En conclusion, ce texte presente le meme article avec plus de contexte, plus de vocabulaire et une explication plus complete des details.`
-  ].join("\n\n");
+  const paragraphs = [
+    `Level 3. ${sentenceFrom(titleText, 24)}`,
+    `Selon ${source}, ${lowerFirst(sentenceFrom(mainDetail, 62))}`
+  ];
+
+  if (secondDetail) {
+    paragraphs.push(`L'article ajoute ce détail important : ${lowerFirst(sentenceFrom(secondDetail, 62))}`);
+  }
+
+  if (thirdDetail) {
+    paragraphs.push(sentenceFrom(thirdDetail, 64));
+  }
+
+  paragraphs.push(
+    `Cette information est datée du ${publishedDate} et vient de ${source}.`
+  );
+
+  return paragraphs.join("\n\n");
+}
+
+function getArticleDetails(article, fallbackTitle) {
+  const candidates = [
+    article.description,
+    article.content
+  ].map(cleanText)
+    .filter(Boolean)
+    .map(removeGNewsTruncation);
+
+  const unique = [];
+  candidates.forEach((candidate) => {
+    const normalized = normalizeText(candidate);
+    if (candidate && !unique.some((item) => normalizeText(item) === normalized)) {
+      unique.push(candidate);
+    }
+  });
+
+  return unique.length > 0 ? unique : [fallbackTitle];
 }
 
 function renderArticleFacts(article) {
   const facts = [
-    ["Title", article.title],
-    ["Source", article.source],
-    ["Main detail", article.description || article.content]
+    ["Article title", article.title],
+    ["Original source", article.source],
+    ["Main details", article.description || article.content]
   ].filter(([, value]) => cleanText(value));
 
   factsBox.hidden = facts.length === 0;
@@ -149,8 +200,13 @@ function renderArticleFacts(article) {
 function renderParagraphs(text) {
   output.innerHTML = "";
   text.split(/\n{2,}/).forEach((paragraph) => {
+    const clean = paragraph.trim();
+    if (!clean) {
+      return;
+    }
+
     const p = document.createElement("p");
-    p.textContent = paragraph.trim();
+    p.textContent = clean;
     output.appendChild(p);
   });
 }
@@ -172,10 +228,59 @@ function cleanText(value) {
     .trim();
 }
 
+function removeGNewsTruncation(text) {
+  return cleanText(text)
+    .replace(/\[\+\d+\s+chars?\]/gi, "")
+    .replace(/\s+\.\s*$/, ".")
+    .trim();
+}
+
+function ensureSentence(text) {
+  const clean = cleanText(text);
+  if (!clean) {
+    return "";
+  }
+
+  return /[.!?]$/.test(clean) ? clean : `${clean}.`;
+}
+
+function sentenceFrom(text, maxWords) {
+  return ensureSentence(stripEndingPunctuation(shorten(text, maxWords)));
+}
+
+function stripEndingPunctuation(text) {
+  return cleanText(text).replace(/[.!?]+$/g, "");
+}
+
 function shorten(text, maxWords) {
   const words = cleanText(text).split(" ").filter(Boolean);
   const clipped = words.slice(0, maxWords).join(" ");
-  return clipped || "l'article presente une nouvelle actuelle avec un lien possible avec le Canada";
+  return clipped || "l'article présente le fait principal avec les détails disponibles";
+}
+
+function lowerFirst(text) {
+  const clean = cleanText(text);
+  return clean ? clean.charAt(0).toLowerCase() + clean.slice(1) : clean;
+}
+
+function normalizeText(value) {
+  return cleanText(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function formatPublishedDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "inconnue";
+  }
+
+  return new Intl.DateTimeFormat("fr-CA", {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  }).format(date);
 }
 
 function escapeHtml(value) {

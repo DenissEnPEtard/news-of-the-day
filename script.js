@@ -1,45 +1,7 @@
+const API_KEY = "bca407c94fadbba9aff3dff0b58870e4";
 const NEWS_API_URL = "/.netlify/functions/news";
 const MAX_ARTICLES = 9;
-const CATEGORY_CACHE_MS = 30 * 60 * 1000;
-
-const categoryConfig = {
-  world: {
-    apiCategory: "world",
-    queries: ["international monde Canada", "cooperation internationale Canada", "decouverte monde francais"]
-  },
-  nation: {
-    apiCategory: "general",
-    queries: ["Canada communaute innovation", "Canada eleves education", "Canada environnement projet"]
-  },
-  technology: {
-    apiCategory: "technology",
-    queries: ["technologie Canada innovation", "science Canada decouverte", "intelligence artificielle Canada"]
-  },
-  sports: {
-    apiCategory: "sports",
-    queries: ["sport Canada equipe", "hockey Canada athlete", "tournoi Canada victoire"]
-  },
-  entertainment: {
-    apiCategory: "entertainment",
-    queries: ["culture Canada festival", "musique Canada artiste", "film Canada cinema"]
-  }
-};
-
-const negativeWords = [
-  "accident",
-  "attaque",
-  "crise",
-  "dead",
-  "death",
-  "deces",
-  "guerre",
-  "killed",
-  "meurtre",
-  "mort",
-  "shooting",
-  "tue",
-  "violence"
-];
+const CATEGORY_CACHE_MS = 15 * 60 * 1000;
 
 const categoryLabels = {
   world: "Monde",
@@ -49,135 +11,212 @@ const categoryLabels = {
   entertainment: "Culture"
 };
 
+const categorySearchQueries = {
+  world: ["international monde Canada", "cooperation internationale Canada", "francophonie monde Canada"],
+  nation: ["Canada communaute innovation", "Canada eleves education", "Canada environnement projet"],
+  technology: ["technologie Canada innovation", "science Canada decouverte", "intelligence artificielle Canada"],
+  sports: ["sport Canada equipe", "hockey Canada athlete", "tournoi Canada victoire"],
+  entertainment: ["culture Canada festival", "musique Canada artiste", "film Canada cinema"]
+};
+
+const levelDetails = {
+  beginner: {
+    label: "Level 1",
+    tag: "Simple",
+    description: "Short sentences and common French words."
+  },
+  intermediate: {
+    label: "Level 2",
+    tag: "Clear",
+    description: "More facts, still easy to follow."
+  },
+  advanced: {
+    label: "Level 3",
+    tag: "Detailed",
+    description: "More context and richer French."
+  }
+};
+
+const negativeWords = [
+  "accident",
+  "attaque",
+  "crise",
+  "dead",
+  "death",
+  "décès",
+  "deces",
+  "guerre",
+  "killed",
+  "meurtre",
+  "mort",
+  "shooting",
+  "tué",
+  "tue",
+  "violence"
+];
+
+const positiveStudentWords = [
+  "artiste",
+  "canada",
+  "canadien",
+  "cinéma",
+  "cinema",
+  "communauté",
+  "communaute",
+  "coopération",
+  "cooperation",
+  "culture",
+  "découverte",
+  "decouverte",
+  "école",
+  "ecole",
+  "élève",
+  "eleve",
+  "environnement",
+  "équipe",
+  "equipe",
+  "festival",
+  "francophonie",
+  "hockey",
+  "innovation",
+  "jeune",
+  "musique",
+  "projet",
+  "science",
+  "sport",
+  "technologie",
+  "victoire"
+];
+
 const localFallbackArticles = {
   world: [
     {
-      title: "Des jeunes Canadiens discutent de cooperation internationale",
-      description: "Une carte de pratique sur la cooperation, les cultures et les liens entre le Canada et le monde.",
-      content: "Des eleves au Canada peuvent apprendre le francais en parlant de cooperation internationale, de cultures differentes et de projets positifs dans le monde.",
+      title: "Des jeunes Canadiens discutent de coopération internationale",
+      description: "Des élèves au Canada parlent de projets positifs qui relient leur communauté à d'autres pays.",
+      content: "Des classes canadiennes peuvent utiliser l'actualité pour comparer les cultures, parler de coopération et mieux comprendre le rôle du Canada dans le monde francophone.",
       url: "https://ici.radio-canada.ca/info/en-continu",
       image: "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     },
     {
-      title: "La francophonie aide les eleves a mieux comprendre le monde",
-      description: "Un sujet positif pour parler de langues, de pays francophones et de communication.",
-      content: "La francophonie permet aux jeunes Canadiens de decouvrir d'autres pays, d'autres accents et d'autres facons de voir le monde.",
+      title: "La francophonie aide les élèves à mieux comprendre le monde",
+      description: "La langue française permet aux jeunes Canadiens de découvrir plusieurs pays, accents et cultures.",
+      content: "La francophonie donne aux élèves un moyen concret de parler de voyages, de musique, de traditions et de communication internationale.",
       url: "https://www.francophonie.org/",
       image: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     },
     {
-      title: "Des projets scolaires relient le Canada a d'autres pays",
-      description: "Un sujet clair pour parler d'education, de collaboration et de citoyennete mondiale.",
-      content: "Des projets scolaires peuvent aider les eleves a comparer leur vie au Canada avec celle de jeunes dans d'autres pays.",
+      title: "Des projets scolaires relient le Canada à d'autres pays",
+      description: "Des écoles utilisent des échanges et des projets en ligne pour connecter les élèves canadiens à des jeunes ailleurs dans le monde.",
+      content: "Ces projets aident les élèves à comparer leur vie quotidienne, à poser des questions et à utiliser le français dans une situation réelle.",
       url: "https://ici.radio-canada.ca/jeunesse",
       image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     }
   ],
   nation: [
     {
-      title: "Des communautes canadiennes lancent des projets positifs",
-      description: "Une carte de pratique sur les villes, les citoyens et les projets locaux au Canada.",
-      content: "Au Canada, plusieurs communautes creent des projets pour ameliorer la vie locale, aider les jeunes et proteger l'environnement.",
+      title: "Des communautés canadiennes lancent des projets positifs",
+      description: "Plusieurs villes et groupes locaux créent des activités pour aider les jeunes, soutenir les familles et protéger l'environnement.",
+      content: "Ces projets montrent comment des citoyens peuvent améliorer leur quartier avec des idées simples, du bénévolat et une bonne organisation.",
       url: "https://ici.radio-canada.ca/info/en-continu",
       image: "https://images.unsplash.com/photo-1517935706615-2717063c2225?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     },
     {
-      title: "Des eleves canadiens utilisent le francais dans la vie quotidienne",
-      description: "Un sujet accessible pour parler d'ecole, de bilinguisme et de confiance en classe.",
-      content: "Les eleves anglophones au Canada peuvent pratiquer le francais avec des nouvelles simples, des videos courtes et des resumes adaptes a leur niveau.",
+      title: "Des élèves canadiens utilisent le français dans la vie quotidienne",
+      description: "Des élèves anglophones pratiquent le français avec des nouvelles simples, des vidéos courtes et des questions de compréhension.",
+      content: "Cette méthode rend la lecture plus utile, parce que les élèves parlent de sujets actuels qui touchent leur pays et leur génération.",
       url: "https://www.canada.ca/fr/patrimoine-canadien/services/langues-officielles-bilinguisme.html",
       image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     },
     {
-      title: "Le Canada encourage les jeunes a participer a leur communaute",
-      description: "Un sujet positif pour parler de benevolat, de citoyennete et de projets locaux.",
-      content: "Participer a sa communaute aide les jeunes a developper leurs competences, rencontrer des gens et comprendre leur pays.",
+      title: "Le Canada encourage les jeunes à participer à leur communauté",
+      description: "Des programmes et des organismes invitent les jeunes à faire du bénévolat et à développer leurs compétences.",
+      content: "Participer à la communauté aide les élèves à rencontrer des gens, comprendre leur ville et prendre confiance dans leurs idées.",
       url: "https://www.canada.ca/fr/services/jeunesse.html",
       image: "https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     }
   ],
   technology: [
     {
-      title: "La technologie aide les eleves canadiens a apprendre le francais",
-      description: "Un sujet clair sur les outils numeriques, les videos et l'apprentissage des langues.",
-      content: "Les outils numeriques peuvent aider les eleves a lire, ecouter et parler en francais plus souvent.",
+      title: "La technologie aide les élèves canadiens à apprendre le français",
+      description: "Des outils numériques permettent de lire, écouter et parler en français plus souvent.",
+      content: "Les vidéos courtes, les applications et les résumés adaptés donnent aux élèves plus de façons de pratiquer en classe et à la maison.",
       url: "https://ici.radio-canada.ca/jeunesse",
       image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     },
     {
-      title: "Des innovations canadiennes rendent l'ecole plus interactive",
-      description: "Une carte de pratique sur l'innovation, la classe et les nouvelles idees.",
-      content: "Des innovations comme les applications, les videos et les outils d'intelligence artificielle peuvent rendre l'apprentissage plus interactif.",
+      title: "Des innovations canadiennes rendent l'école plus interactive",
+      description: "Des enseignants utilisent des outils modernes pour rendre les cours plus visuels, participatifs et faciles à suivre.",
+      content: "Ces innovations peuvent aider les élèves à travailler ensemble, poser des questions et comprendre des idées complexes plus rapidement.",
       url: "https://ised-isde.canada.ca/site/isde/fr",
       image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     },
     {
       title: "La science et la technologie donnent de nouveaux sujets de discussion",
-      description: "Un sujet pour apprendre du vocabulaire sur la science, les appareils et la securite.",
-      content: "Les nouvelles technologiques permettent aux eleves de discuter d'innovation, de securite et d'avenir en francais.",
+      description: "Les nouvelles scientifiques aident les élèves à apprendre du vocabulaire sur l'innovation, la sécurité et l'avenir.",
+      content: "Les sujets technologiques sont utiles en français parce qu'ils parlent de problèmes réels, de solutions et de changements dans la vie quotidienne.",
       url: "https://ici.radio-canada.ca/science",
       image: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     }
   ],
   sports: [
     {
-      title: "Le sport canadien rassemble les eleves et les communautes",
-      description: "Une carte de pratique sur les equipes, les matchs et l'esprit sportif.",
-      content: "Le sport aide les jeunes a parler de travail d'equipe, d'effort, de victoire et de respect.",
+      title: "Le sport canadien rassemble les élèves et les communautés",
+      description: "Les équipes, les matchs et les athlètes donnent aux jeunes des sujets faciles pour parler en français.",
+      content: "Le sport aide les élèves à utiliser des mots sur l'effort, le respect, la victoire, la défaite et le travail d'équipe.",
       url: "https://ici.radio-canada.ca/sports",
       image: "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     },
     {
-      title: "Des athletes canadiens inspirent les jeunes",
-      description: "Un sujet positif pour parler d'objectifs, d'entrainement et de perseverance.",
-      content: "Les athletes canadiens peuvent inspirer les eleves parce qu'ils montrent l'importance de la discipline et de la confiance.",
+      title: "Des athlètes canadiens inspirent les jeunes",
+      description: "Des sportifs canadiens montrent l'importance de l'entraînement, de la discipline et de la confiance.",
+      content: "Leurs histoires donnent aux élèves des exemples concrets pour parler d'objectifs personnels et de persévérance.",
       url: "https://www.canada.ca/fr/patrimoine-canadien/services/sport-canada.html",
       image: "https://images.unsplash.com/photo-1526676037777-05a232554f77?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     },
     {
       title: "Le hockey reste un sujet important pour parler du Canada",
-      description: "Un sujet familier pour pratiquer le vocabulaire du sport en francais.",
-      content: "Le hockey est souvent associe au Canada et donne aux eleves un sujet facile pour parler d'equipes, de joueurs et de matchs.",
+      description: "Le hockey donne aux élèves un vocabulaire familier sur les joueurs, les équipes, les matchs et les résultats.",
+      content: "Comme ce sport est très connu au Canada, il peut rendre la discussion en français plus naturelle pour plusieurs classes.",
       url: "https://ici.radio-canada.ca/sports/hockey",
       image: "https://images.unsplash.com/photo-1580748141549-71748dbe0bdc?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     }
   ],
   entertainment: [
     {
-      title: "La culture canadienne donne de bons sujets en classe de francais",
-      description: "Une carte de pratique sur la musique, les films, les festivals et les artistes.",
-      content: "La culture canadienne permet aux eleves de discuter de musique, de cinema, d'art et d'evenements locaux.",
+      title: "La culture canadienne donne de bons sujets en classe de français",
+      description: "La musique, les films, les festivals et les artistes aident les élèves à parler de goûts et d'identité.",
+      content: "Les sujets culturels sont utiles parce qu'ils permettent aux élèves de donner leur opinion avec un vocabulaire simple et personnel.",
       url: "https://ici.radio-canada.ca/arts",
       image: "https://images.unsplash.com/photo-1508973379184-7517410fb0bc?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     },
     {
-      title: "Les festivals aident les jeunes a decouvrir la culture francophone",
-      description: "Un sujet positif pour parler d'evenements, de villes et de traditions.",
-      content: "Les festivals francophones au Canada peuvent aider les jeunes a entendre le francais dans un contexte vivant et amusant.",
+      title: "Les festivals aident les jeunes à découvrir la culture francophone",
+      description: "Des festivals au Canada permettent d'entendre le français dans la musique, les spectacles et les activités publiques.",
+      content: "Ces événements donnent aux élèves un exemple vivant de la langue française en dehors de la salle de classe.",
       url: "https://www.canada.ca/fr/patrimoine-canadien/services/financement/festivals-locaux.html",
       image: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     },
     {
-      title: "Les artistes canadiens racontent des histoires en francais",
-      description: "Un sujet pour parler de chansons, de films et d'identite culturelle.",
-      content: "Les artistes canadiens peuvent aider les eleves a comprendre comment la langue francaise sert a raconter des histoires.",
+      title: "Les artistes canadiens racontent des histoires en français",
+      description: "Des artistes utilisent des chansons, des films et des balados pour partager des histoires canadiennes.",
+      content: "Ces œuvres aident les élèves à voir comment le français peut exprimer des émotions, des idées et des expériences modernes.",
       url: "https://ici.radio-canada.ca/ohdio",
       image: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=900&q=80",
-      source: { name: "Practice news backup" }
+      source: { name: "News of the Day practice article" }
     }
   ]
 };
@@ -261,9 +300,11 @@ function scheduleDailyRefresh() {
 
   window.setTimeout(() => {
     updateTodayLabel();
+    categoryCache = {};
     loadNews(activeCategory);
     window.setInterval(() => {
       updateTodayLabel();
+      categoryCache = {};
       loadNews(activeCategory);
     }, 24 * 60 * 60 * 1000);
   }, nextMorning.getTime() - now.getTime());
@@ -272,7 +313,7 @@ function scheduleDailyRefresh() {
 async function loadNews(category) {
   const loadId = ++latestLoadId;
   setLoading(true);
-  showError("");
+  showMessage("");
   newsGrid.innerHTML = "";
 
   try {
@@ -286,6 +327,7 @@ async function loadNews(category) {
     if (loadId !== latestLoadId) {
       return;
     }
+
     if (articles.length === 0) {
       throw new Error("No articles are available for this category.");
     }
@@ -300,7 +342,8 @@ async function loadNews(category) {
       return;
     }
     console.error(error);
-    showError(error.message || "The news could not load right now. Check the API key, check the Internet connection, or try again later.");
+    showMessage(error.message || "The news could not load right now. Please check the API key or try again later.", "error");
+    renderArticles(getLocalFallbackArticles(category), category);
   } finally {
     if (loadId === latestLoadId) {
       setLoading(false);
@@ -309,8 +352,10 @@ async function loadNews(category) {
 }
 
 async function fetchArticlesForCategory(category) {
+  const dayKey = new Date().toISOString().slice(0, 10);
+
   try {
-    const response = await fetch(`${NEWS_API_URL}?category=${encodeURIComponent(category)}`);
+    const response = await fetch(`${NEWS_API_URL}?category=${encodeURIComponent(category)}&day=${dayKey}`);
     if (!response.ok) {
       throw new Error(`News function error: ${response.status}`);
     }
@@ -319,7 +364,7 @@ async function fetchArticlesForCategory(category) {
     const articles = Array.isArray(data.articles) ? data.articles : [];
     if (articles.length > 0) {
       if (data.fallback) {
-        showError("GNews is temporarily unavailable. Practice articles are shown so the class can continue.");
+        showMessage("Live news is limited right now. Practice articles are shown so the class can continue.", "notice");
       }
       return articles;
     }
@@ -327,8 +372,36 @@ async function fetchArticlesForCategory(category) {
     console.warn(error);
   }
 
-  showError("Live news could not load. Practice articles are shown so the class can continue.");
+  try {
+    const directArticles = await fetchDirectGNews(category);
+    if (directArticles.length > 0) {
+      return directArticles;
+    }
+  } catch (error) {
+    console.warn(error);
+  }
+
+  showMessage("Live news could not load. Practice articles are shown so the class can continue.", "notice");
   return getLocalFallbackArticles(category);
+}
+
+async function fetchDirectGNews(category) {
+  const query = categorySearchQueries[category]?.[0] || categorySearchQueries.world[0];
+  const params = new URLSearchParams({
+    q: query,
+    lang: "fr",
+    country: "ca",
+    max: String(MAX_ARTICLES),
+    apikey: API_KEY
+  });
+
+  const response = await fetch(`https://gnews.io/api/v4/search?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error(`Direct GNews error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return Array.isArray(data.articles) ? data.articles : [];
 }
 
 function renderArticles(articles, category) {
@@ -336,11 +409,11 @@ function renderArticles(articles, category) {
   const sourceArticles = positiveArticles.length >= 3 ? positiveArticles : articles;
   articleStore = {};
   let cardArticles = sourceArticles
-    .filter((article) => article.title && article.url)
+    .filter((article) => article.title)
     .slice(0, MAX_ARTICLES);
 
   if (cardArticles.length < 3) {
-    showError("Live news is limited right now. Practice articles are shown so the class can continue.");
+    showMessage("Only a few live articles loaded. Practice articles are shown so every category stays usable.", "notice");
     cardArticles = getLocalFallbackArticles(category);
   }
 
@@ -360,22 +433,24 @@ function getLocalFallbackArticles(category) {
 
 function isStudentFriendlyArticle(article) {
   const text = normalizeText(`${article.title || ""} ${article.description || ""}`);
-  return !negativeWords.some((word) => text.includes(word));
+  const hasNegativeWord = negativeWords.some((word) => text.includes(normalizeText(word)));
+  const hasPositiveStudentWord = positiveStudentWords.some((word) => text.includes(normalizeText(word)));
+  return !hasNegativeWord && hasPositiveStudentWord;
 }
 
 function normalizeText(value) {
-  return value
+  return String(value || "")
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 }
 
 function createArticleCard(article, category, index) {
-  const help = learningHelp[category];
+  const help = learningHelp[category] || learningHelp.world;
   const articleId = `${category}-${index}`;
   const sourceName = article.source?.name || "Unknown source";
   const publishedAt = article.publishedAt ? formatDate(article.publishedAt) : "Unknown date";
-  const description = article.description || "Use the summary levels to discover the main idea of this French news story.";
+  const description = cleanSentence(article.description || "Choose a level to read this news story in clear French.");
   const imageUrl = article.image || "https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=900&q=80";
   const summaries = createDifficultySummaries(article, category);
   const summaryId = `summary-${category}-${index}`;
@@ -387,21 +462,25 @@ function createArticleCard(article, category, index) {
       <img class="news-image" src="${escapeAttribute(imageUrl)}" alt="${escapeAttribute(article.title)}" loading="lazy">
       <div class="card-body">
         <div class="meta-row">
-          <span>${escapeHtml(sourceName)}</span>
-          <span>${publishedAt}</span>
+          <span>Source: ${escapeHtml(sourceName)}</span>
+          <span>Date: ${publishedAt}</span>
           <span>${categoryLabels[category]}</span>
         </div>
-        <p class="category-note">Category loaded: ${escapeHtml(categoryLabels[category])}</p>
+        <p class="category-note">Student-friendly ${escapeHtml(categoryLabels[category])} topic</p>
         <h3>${escapeHtml(article.title)}</h3>
         <p class="description">${escapeHtml(description)}</p>
         <section class="summary-box" aria-labelledby="${summaryId}-title">
-          <h4 id="${summaryId}-title">Choose your summary level</h4>
+          <h4 id="${summaryId}-title">Read this article in French</h4>
+          <p class="level-hint">Choose a level before opening the full rewritten article.</p>
           <div class="difficulty-buttons" role="group" aria-label="Summary difficulty">
-            <button type="button" class="difficulty-button" data-summary-level="beginner">Level 1</button>
-            <button type="button" class="difficulty-button" data-summary-level="intermediate">Level 2</button>
-            <button type="button" class="difficulty-button" data-summary-level="advanced">Level 3</button>
+            ${Object.entries(levelDetails).map(([level, detail]) => `
+              <button type="button" class="difficulty-button" data-summary-level="${level}" title="${escapeAttribute(detail.description)}">
+                <strong>${detail.label}</strong>
+                <span>${detail.tag}</span>
+              </button>
+            `).join("")}
           </div>
-          <p class="summary-text" id="${summaryId}" data-summary-text aria-live="polite">Choose Level 1, Level 2, or Level 3 to read the article at your French level.</p>
+          <p class="summary-text" id="${summaryId}" data-summary-text aria-live="polite">Pick Level 1, Level 2, or Level 3. The next page will show the article rewritten in French for that level.</p>
           <template data-summary-template="beginner">${escapeHtml(summaries.beginner)}</template>
           <template data-summary-template="intermediate">${escapeHtml(summaries.intermediate)}</template>
           <template data-summary-template="advanced">${escapeHtml(summaries.advanced)}</template>
@@ -411,12 +490,12 @@ function createArticleCard(article, category, index) {
           <ul class="vocab-list">
             ${help.vocab.map((word) => `<li>${escapeHtml(word)}</li>`).join("")}
           </ul>
-          <p class="simple-sentence"><strong>Simple French sentence:</strong> ${escapeHtml(help.sentence)}</p>
-          <p class="question"><strong>Comprehension question:</strong> ${escapeHtml(help.question)}</p>
+          <p class="simple-sentence"><strong>Simple sentence:</strong> ${escapeHtml(help.sentence)}</p>
+          <p class="question"><strong>Quick question:</strong> ${escapeHtml(help.question)}</p>
         </section>
         <section class="video-box" data-video-box data-video-query="${escapeAttribute(videoQuery)}" aria-label="Short French video">
           <h4>Short French video</h4>
-          <p data-video-status>Looking for a short French video connected to this story...</p>
+          <p data-video-status>Looking for a short French video connected to this article...</p>
           <a class="video-fallback-link" href="${escapeAttribute(createVideoSearchUrl(videoQuery))}" target="_blank" rel="noopener noreferrer">Search French videos</a>
         </section>
         <button class="summary-button disabled" type="button" data-generate-summary aria-disabled="true">Choose a level first</button>
@@ -492,7 +571,7 @@ function createVideoQuery(article, category) {
     .slice(0, 7)
     .join(" ");
 
-  return `${titleWords || categoryLabels[category]} francais Canada courte video`;
+  return `${titleWords || categoryLabels[category]} français Canada courte vidéo`;
 }
 
 function createVideoSearchUrl(query) {
@@ -508,6 +587,7 @@ async function handleNewsGridClick(event) {
     const level = difficultyButton.dataset.summaryLevel;
     const summaryText = card.querySelector("[data-summary-text]");
     const generateButton = card.querySelector("[data-generate-summary]");
+    const detail = levelDetails[level] || levelDetails.beginner;
 
     card.querySelectorAll("[data-summary-level]").forEach((button) => {
       const isActive = button === difficultyButton;
@@ -516,10 +596,10 @@ async function handleNewsGridClick(event) {
     });
 
     card.dataset.selectedLevel = level;
-    summaryText.textContent = `${difficultyButton.textContent} selected. Open this article in a clear French level.`;
+    summaryText.textContent = `${detail.label} selected: ${detail.description} Open the rewritten French article on the next page.`;
     generateButton.classList.remove("disabled");
     generateButton.removeAttribute("aria-disabled");
-    generateButton.textContent = "Open leveled article";
+    generateButton.textContent = `Open ${detail.label} article`;
     return;
   }
 
@@ -550,6 +630,7 @@ async function handleNewsGridClick(event) {
           content: article.content,
           source: article.source?.name,
           image: article.image,
+          url: article.url,
           publishedAt: article.publishedAt
         }
       }));
@@ -570,43 +651,50 @@ function createDifficultySummaries(article, category) {
   const title = cleanSentence(article.title);
   const description = cleanSentence(article.description || "");
   const content = cleanSentence(article.content || description || title);
-  const categoryLabel = categoryLabels[category];
+  const mainText = description || content || title;
 
   return {
-    beginner: `Level 1. Titre : ${title}. Idee principale : ${makeShortSummary(content, 18)}.`,
-    intermediate: `Level 2. ${makeShortSummary(content, 34)} Cette nouvelle est liee a ${categoryLabel} et ajoute quelques details importants.`,
-    advanced: `Level 3. ${makeShortSummary(content, 54)} Cette nouvelle explique le sujet avec plus de contexte, de details et d'importance.`
+    beginner: `Level 1. ${title}. ${makeShortSummary(mainText, 18)}.`,
+    intermediate: `Level 2. ${title}. ${makeShortSummary(mainText, 34)} ${makeShortSummary(content, 18)}.`,
+    advanced: `Level 3. ${title}. ${makeShortSummary(mainText, 48)} ${makeShortSummary(content, 34)}.`
   };
 }
 
 function makeShortSummary(text, maxWords) {
   const words = cleanSentence(text).split(" ").filter(Boolean);
   const selectedWords = words.slice(0, maxWords).join(" ");
-  return selectedWords || "L'article presente une nouvelle actuelle avec un lien avec le Canada";
+  return selectedWords || "L'article présente le fait principal avec les détails disponibles";
 }
 
 function cleanSentence(value) {
   return String(value || "")
+    .replace(/\[\+\d+\s+chars?\]/gi, "")
     .replace(/\s+/g, " ")
     .replace(/[<>]/g, "")
     .trim();
 }
 
 function formatDate(dateString) {
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown date";
+  }
+
   return new Intl.DateTimeFormat("fr-CA", {
     day: "numeric",
     month: "short",
     year: "numeric"
-  }).format(new Date(dateString));
+  }).format(date);
 }
 
 function setLoading(isLoading) {
   loading.hidden = !isLoading;
 }
 
-function showError(message) {
+function showMessage(message, type = "error") {
   errorMessage.hidden = !message;
   errorMessage.textContent = message;
+  errorMessage.classList.toggle("notice-message", type === "notice");
 }
 
 function escapeHtml(value) {
