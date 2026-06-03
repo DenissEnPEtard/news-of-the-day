@@ -88,7 +88,7 @@ const localFallbackArticles = {
     {
       title: "Des eleves canadiens utilisent le francais dans la vie quotidienne",
       description: "Un sujet accessible pour parler d'ecole, de bilinguisme et de confiance en classe.",
-      content: "Les eleves anglophones au Canada peuvent pratiquer le francais avec des nouvelles simples, des videos courtes et des presentations orales.",
+      content: "Les eleves anglophones au Canada peuvent pratiquer le francais avec des nouvelles simples, des videos courtes et des resumes adaptes a leur niveau.",
       url: "https://www.canada.ca/fr/patrimoine-canadien/services/langues-officielles-bilinguisme.html",
       image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=80",
       source: { name: "Practice news backup" }
@@ -401,7 +401,7 @@ function createArticleCard(article, category, index) {
             <button type="button" class="difficulty-button" data-summary-level="intermediate">Intermediate</button>
             <button type="button" class="difficulty-button" data-summary-level="advanced">Advanced</button>
           </div>
-          <p class="summary-text" id="${summaryId}" data-summary-text aria-live="polite">Select a level first, then open a presentation summary page.</p>
+          <p class="summary-text" id="${summaryId}" data-summary-text aria-live="polite">Select a level first, then open a detailed article summary.</p>
           <template data-summary-template="beginner">${escapeHtml(summaries.beginner)}</template>
           <template data-summary-template="intermediate">${escapeHtml(summaries.intermediate)}</template>
           <template data-summary-template="advanced">${escapeHtml(summaries.advanced)}</template>
@@ -516,10 +516,10 @@ async function handleNewsGridClick(event) {
     });
 
     card.dataset.selectedLevel = level;
-    summaryText.textContent = `Level selected: ${difficultyButton.textContent}. Open a new page with a class presentation summary.`;
+    summaryText.textContent = `Level selected: ${difficultyButton.textContent}. Open a detailed summary of this article.`;
     generateButton.classList.remove("disabled");
     generateButton.removeAttribute("aria-disabled");
-    generateButton.textContent = "Open presentation summary";
+    generateButton.textContent = "Open article summary";
     return;
   }
 

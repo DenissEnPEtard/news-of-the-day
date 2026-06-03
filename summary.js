@@ -8,9 +8,9 @@ const statusText = document.getElementById("summary-status");
 const output = document.getElementById("summary-output");
 const factsBox = document.getElementById("article-facts");
 
-loadPresentationSummary();
+loadArticleSummary();
 
-async function loadPresentationSummary() {
+async function loadArticleSummary() {
   let saved = null;
 
   try {
@@ -51,12 +51,12 @@ async function loadPresentationSummary() {
 
   try {
     const summary = await requestAiSummary(article, level);
-    statusText.textContent = "Ready to read aloud.";
+    statusText.textContent = "Summary ready.";
     renderParagraphs(summary);
   } catch (error) {
     console.warn(error);
-    statusText.textContent = "AI summary unavailable. Showing a local presentation summary instead.";
-    renderParagraphs(createLocalPresentationSummary(article, level));
+    statusText.textContent = "AI summary unavailable. Showing a local article summary instead.";
+    renderParagraphs(createLocalArticleSummary(article, level));
   }
 }
 
@@ -94,7 +94,7 @@ async function requestAiSummary(article, level) {
   return data.summary;
 }
 
-function createLocalPresentationSummary(article, level) {
+function createLocalArticleSummary(article, level) {
   const titleText = cleanText(article.title || "cette nouvelle");
   const description = cleanText(article.description || "");
   const detail = cleanText(article.content || article.description || titleText);
@@ -105,32 +105,31 @@ function createLocalPresentationSummary(article, level) {
 
   if (level === "beginner") {
     return [
-      `Bonjour tout le monde. Aujourd'hui, je vais presenter une nouvelle dans la categorie ${category}.`,
-      `Le titre est : ${titleText}.`,
-      `Selon ${source}, l'information principale est : ${shorten(mainInfo, 34)}.`,
-      `Un detail important est : ${shorten(supportingInfo, 28)}.`,
-      `Je pense que cet article est utile pour notre classe parce qu'il nous donne un vrai sujet canadien a expliquer en francais.`,
-      `Merci de m'avoir ecoute.`
+      `Cet article s'intitule : ${titleText}. Il vient de ${source}.`,
+      `L'idee principale est simple : ${shorten(mainInfo, 36)}.`,
+      `Un detail important est : ${shorten(supportingInfo, 32)}.`,
+      `En mots simples, cet article parle d'un sujet lie a ${category}. Il aide a comprendre une information actuelle sans utiliser un francais trop difficile.`,
+      `A retenir : le titre, l'idee principale et le detail important sont les trois parties les plus utiles pour comprendre l'article.`
     ].join("\n\n");
   }
 
   if (level === "intermediate") {
     return [
-      `Bonjour a toutes et a tous. Aujourd'hui, je vais vous presenter une nouvelle liee a ${category}.`,
-      `L'article s'intitule : ${titleText}. Il vient de ${source}, et il parle surtout de cette idee : ${shorten(mainInfo, 48)}.`,
-      `D'abord, cette nouvelle est importante parce qu'elle presente un fait concret, pas seulement un theme general. Ensuite, le detail a retenir est le suivant : ${shorten(supportingInfo, 58)}.`,
-      `Enfin, je pense que cet article peut interesser des eleves canadiens parce qu'il relie l'actualite a notre vie, a notre pays ou a notre facon d'apprendre le francais.`,
-      `Pour conclure, cet article me permet d'expliquer une vraie information en francais et de pratiquer un vocabulaire utile devant la classe.`
+      `L'article s'intitule : ${titleText}. Il vient de ${source} et appartient a la categorie ${category}.`,
+      `Le resume de l'article est le suivant : ${shorten(mainInfo, 58)}.`,
+      `Le detail le plus utile pour mieux comprendre l'article est : ${shorten(supportingInfo, 70)}. Ce detail est important parce qu'il precise le sujet et montre ce que le lecteur doit retenir.`,
+      `L'article peut etre relie a la vie des Canadiens ou des eleves parce qu'il donne un exemple concret d'une situation actuelle. Il ne faut donc pas seulement retenir le theme general, mais aussi les informations precises donnees par la source.`,
+      `En conclusion, cet article explique une information principale, ajoute au moins un detail important, et permet de pratiquer un vocabulaire utile en francais.`
     ].join("\n\n");
   }
 
   return [
-    `Bonjour a toutes et a tous. Pour ma presentation, j'ai choisi une nouvelle de la categorie ${category}. Le titre est : ${titleText}.`,
-    `La source est ${source}. L'idee principale de l'article est la suivante : ${shorten(mainInfo, 70)}.`,
-    `Le detail le plus important a expliquer est celui-ci : ${shorten(supportingInfo, 95)}. Ce detail rend l'article plus precis, parce qu'il montre de quoi il s'agit vraiment et evite de parler seulement du sujet de maniere generale.`,
-    `On peut retenir trois elements. Premierement, l'article presente une information concrete. Deuxiemement, cette information a un lien avec ${category} et peut parler a des eleves au Canada. Troisiemement, elle donne l'occasion d'utiliser un francais plus riche pour expliquer les faits, donner du contexte et exprimer une opinion.`,
-    `A mon avis, cette nouvelle merite d'etre presentee en classe parce qu'elle transforme un article reel en discussion. Elle nous oblige a lire attentivement le titre, la description et les details disponibles, puis a les reformuler clairement pour que tout le monde comprenne.`,
-    `Merci de votre attention.`
+    `Titre de l'article : ${titleText}. Source : ${source}. Categorie : ${category}.`,
+    `Resume detaille : ${shorten(mainInfo, 90)}.`,
+    `Explication du detail principal : ${shorten(supportingInfo, 110)}. Ce detail donne de la precision au resume, car il montre les faits disponibles dans l'article plutot que de rester au niveau d'une idee generale.`,
+    `Pour comprendre l'article, il faut distinguer trois choses. D'abord, le sujet annonce par le titre. Ensuite, l'information principale donnee par la description. Enfin, les details qui expliquent pourquoi cette information est importante ou interessante.`,
+    `Ce qu'il faut retenir, c'est que l'article presente une information precise et que le lecteur doit utiliser les details pour expliquer le sens de la nouvelle. Un bon resume ne repete pas seulement le titre : il explique aussi ce qui se passe, qui est concerne, et pourquoi cela compte.`,
+    `En conclusion, cet article doit etre compris a partir de ses faits principaux, de sa source et des details disponibles.`
   ].join("\n\n");
 }
 

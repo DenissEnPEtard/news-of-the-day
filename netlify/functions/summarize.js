@@ -40,22 +40,22 @@ exports.handler = async (event) => {
 
 function buildPrompt(article, level) {
   const levelInstructions = {
-    beginner: "Beginner level: write 5 short sentences in very simple French. Use common vocabulary, present tense, and short sentence structures. The text should be around 90 to 120 French words.",
-    intermediate: "Intermediate level: write 3 clear paragraphs in French. Use useful transition words such as d'abord, ensuite, enfin, and explain the main idea, why it matters, and one simple opinion. The text should be around 150 to 190 French words.",
-    advanced: "Advanced level: write 4 developed paragraphs in richer but still student-friendly French. Include context, main facts, importance for Canadians or students, and a thoughtful opinion. The text should be around 220 to 280 French words."
+    beginner: "Beginner level: write a real article summary in very simple French. Use 4 to 5 short paragraphs, common vocabulary, and clear explanations. Around 110 to 140 French words.",
+    intermediate: "Intermediate level: write a real article summary in clear French. Use 4 paragraphs: main idea, important details, why it matters, and what to remember. Around 170 to 220 French words.",
+    advanced: "Advanced level: write a detailed article summary in richer but still student-friendly French. Use 5 paragraphs: context, main fact, supporting details, explanation of importance, and final takeaway. Around 260 to 330 French words."
   };
 
   return [
     "You are helping English-speaking Canadian high school students learn French.",
-    "Create a clear, complete, positive, student-friendly French oral presentation summary of this news item.",
-    "The student will read this text aloud in front of the class, so write it like a spoken presentation.",
+    "Create a clear, complete, student-friendly French summary of this news article.",
+    "This must be a real summary, not an oral presentation script.",
     "The summary MUST be about the specific article below, not a generic topic.",
     "You MUST mention the specific title or a close paraphrase of it in the first paragraph.",
     "You MUST use concrete details from the Description and Content fields. If the article data is short, say only what is available and do not add unrelated examples.",
-    "Start naturally, explain the article's main fact, include why that fact matters, and end with a short closing sentence.",
+    "Explain the article's main fact, important details, why it matters, and what the reader should remember.",
     "Do not invent facts beyond the article data.",
     "Do not write a generic text about Canada, French learning, school, or the category unless those details are in the article data.",
-    "Do not include markdown, bullet points, headings, or stage directions.",
+    "Do not include markdown, bullet points, stage directions, greetings, or phrases like 'Bonjour tout le monde'.",
     levelInstructions[level] || levelInstructions.beginner,
     "",
     `Category: ${article.category || "News"}`,
